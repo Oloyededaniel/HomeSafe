@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeSafe - About Us</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .card {
+            transition: transform 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold">HomeSafe</a>
+            <ul class="flex space-x-4">
+                <li><a href="/home.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Home</a></li>
+                <li><a href="/Sensor_readings.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Dashboard</a></li>
+                <li><a href="/livefeed.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Live Feed</a></li>
+                <li><a href="/about_us.html" class="hover:text-blue-200 transition duration-150 ease-in-out">About Us</a></li>
+                <li><a href="/Services.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Services</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800 slide-in">About HomeSafe</h1>
+        <div class="max-w-3xl mx-auto mb-12 text-center slide-in">
+            <p class="text-lg text-gray-700">
+                HomeSafe is your trusted partner in home security. We provide cutting-edge technology to keep your home safe and give you peace of mind. Our mission is to create a safer world, one home at a time.
+            </p>
+        </div>
+
+        <h2 class="text-2xl font-bold text-center mb-8 text-blue-700 slide-in">Our Plans</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="card bg-white p-6 rounded-lg shadow-lg slide-in">
+                <h3 class="text-xl font-semibold mb-4 text-blue-600">Weekly</h3>
+                <p class="text-3xl font-bold mb-4">$9.99<span class="text-sm font-normal">/week</span></p>
+                <ul class="mb-6">
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> 24/7 Monitoring</li>
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Mobile App Access</li>
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Email Alerts</li>
+                </ul>
+                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Choose Plan</button>
+            </div>
+            <div class="card bg-white p-6 rounded-lg shadow-lg slide-in">
+                <h3 class="text-xl font-semibold mb-4 text-blue-600">Monthly</h3>
+                <p class="text-3xl font-bold mb-4">$29.99<span class="text-sm font-normal">/month</span></p>
+                <ul class="mb-6">
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> All Weekly Features</li>
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Live Video Feed</li>
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Smart Lock Control</li>
+                </ul>
+                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Choose Plan</button>
+            </div>
+            <div class="card bg-white p-6 rounded-lg shadow-lg slide-in">
+                <h3 class="text-xl font-semibold mb-4 text-blue-600">Yearly</h3>
+                <p class="text-3xl font-bold mb-4">$299.99<span class="text-sm font-normal">/year</span></p>
+                <ul class="mb-6">
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> All Monthly Features</li>
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> 24/7 Priority Support</li>
+                    <li class="mb-2 flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Annual Security Audit</li>
+                </ul>
+                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">Choose Plan</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.querySelectorAll('.card button').forEach(button => {
+            button.addEventListener('click', function() {
+                const plan = this.closest('.card').querySelector('h3').textContent;
+                alert(`Thank you for choosing the ${plan} plan! Our team will contact you shortly to complete the setup.`);
+            });
+        });
+    </script>
+</body>
+</html>

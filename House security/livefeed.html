@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeSafe - Live Feed</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .emergency-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emergency-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                120deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transition: all 0.5s;
+        }
+
+        .emergency-btn:hover:before {
+            left: 100%;
+        }
+
+        .lock-btn {
+            animation: pulse 2s infinite;
+        }
+
+        .call-911-btn {
+            animation: shake 2s infinite;
+        }
+
+        .emergency-btn:active {
+            transform: scale(0.95);
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            z-index: 50;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .lock-status {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .lock-status.locked {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: rgb(239, 68, 68);
+            border: 2px solid rgb(239, 68, 68);
+        }
+
+        .lock-status.unlocked {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: rgb(34, 197, 94);
+            border: 2px solid rgb(34, 197, 94);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold">HomeSafe</a>
+            <ul class="flex space-x-4">
+                <li><a href="/home.html" class="hover:text-blue-200">Home</a></li>
+                <li><a href="/Sensor_readings.html" class="hover:text-blue-200">Dashboard</a></li>
+                <li><a href="/livefeed.html" class="hover:text-blue-200">Live Feed</a></li>
+                <li><a href="/about_us.html" class="hover:text-blue-200">About Us</a></li>
+                <li><a href="/Services.html" class="hover:text-blue-200">Services</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">Live Feed</h1>
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <div class="video-container mb-6">
+                <canvas id="videoCanvas" class="w-full"></canvas>
+            </div>
+            <div id="detectionStatus" class="text-center text-red-500 text-xl font-semibold mb-4">
+                Connecting to video feed...
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-stretch space-y-6 md:space-y-0 md:space-x-12 mt-8 px-4">
+                <div class="flex-1 flex flex-col items-center">
+                    <button id="lockBtn" class="emergency-btn lock-btn w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white font-bold py-6 px-8 rounded-xl shadow-xl transform transition-all duration-300 ease-in-out flex items-center justify-center space-x-4">
+                        <i class="fas fa-lock text-3xl"></i>
+                        <span class="text-2xl">Lock Door</span>
+                    </button>
+                    <div id="lockStatus" class="mt-4 text-lg font-semibold text-center"></div>
+                </div>
+
+                <div class="flex-1">
+                    <button id="call911Btn" class="emergency-btn call-911-btn w-full bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-600 hover:to-red-600 text-white font-bold py-6 px-8 rounded-xl shadow-xl transform transition-all duration-300 ease-in-out flex items-center justify-center space-x-4">
+                        <i class="fas fa-phone-alt text-3xl"></i>
+                        <span class="text-2xl">EMERGENCY 911</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const detectionStatus = document.getElementById('detectionStatus');
+
+        // Set canvas size
+        canvas.width = 640;
+        canvas.height = 480;
+
+        // Connect to WebSocket server
+        const ws = new WebSocket('ws://localhost:8765');
+
+        ws.onopen = function() {
+            console.log('Connected to video server');
+            detectionStatus.textContent = "Connected to video feed";
+        };
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            // Update detection status
+            if (data.human_detected) {
+                detectionStatus.textContent = "Human Detected!";
+                detectionStatus.classList.replace("text-red-500", "text-green-500");
+                
+                // Send notification with cooldown
+                sendEmailAlert();
+            } else {
+                detectionStatus.textContent = "Detecting...";
+                detectionStatus.classList.replace("text-green-500", "text-red-500");
+            }
+
+            // Display the image
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = 'data:image/jpeg;base64,' + data.image;
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            detectionStatus.textContent = "Connection Error";
+        };
+
+        ws.onclose = function() {
+            console.log('Disconnected from video server');
+            detectionStatus.textContent = "Disconnected from video feed";
+        };
+
+        // Lock button functionality
+        const lockBtn = document.getElementById('lockBtn');
+        const lockStatus = document.getElementById('lockStatus');
+
+        function updateLockStatus(isLocked) {
+            lockStatus.className = `lock-status ${isLocked ? 'locked' : 'unlocked'}`;
+            lockStatus.textContent = isLocked ? '🔒 Door is Locked' : '🔓 Door is Unlocked';
+        }
+
+        // Initialize lock status
+        updateLockStatus(true);
+
+        lockBtn.addEventListener('click', () => {
+            const isLocked = lockBtn.querySelector('span').textContent.includes('Lock');
+            
+            // Add clicking effect
+            lockBtn.classList.add('scale-95');
+            setTimeout(() => lockBtn.classList.remove('scale-95'), 200);
+
+            if (isLocked) {
+                lockBtn.innerHTML = `
+                    <i class="fas fa-unlock text-3xl"></i>
+                    <span class="text-2xl">Unlock Door</span>
+                `;
+                lockBtn.classList.remove('from-red-500', 'to-red-700', 'hover:from-red-600', 'hover:to-red-800');
+                lockBtn.classList.add('from-green-500', 'to-green-700', 'hover:from-green-600', 'hover:to-green-800');
+            } else {
+                lockBtn.innerHTML = `
+                    <i class="fas fa-lock text-3xl"></i>
+                    <span class="text-2xl">Lock Door</span>
+                `;
+                lockBtn.classList.remove('from-green-500', 'to-green-700', 'hover:from-green-600', 'hover:to-green-800');
+                lockBtn.classList.add('from-red-500', 'to-red-700', 'hover:from-red-600', 'hover:to-red-800');
+            }
+
+            // Update lock status
+            updateLockStatus(!isLocked);
+
+            // Show toast notification
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas ${isLocked ? 'fa-lock' : 'fa-unlock'} text-2xl"></i>
+                    <span>Door ${isLocked ? 'locked' : 'unlocked'} successfully!</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 100%)';
+                setTimeout(() => toast.remove(), 500);
+            }, 2000);
+        });
+
+        // Call 911 button functionality
+        const call911Btn = document.getElementById('call911Btn');
+        call911Btn.addEventListener('click', () => {
+            if (confirm('⚠️ EMERGENCY: Are you sure you want to call 911?')) {
+                // Add clicking effect
+                call911Btn.classList.add('scale-95');
+                setTimeout(() => call911Btn.classList.remove('scale-95'), 200);
+
+                // Show emergency notification
+                const emergency = document.createElement('div');
+                emergency.className = 'fixed inset-0 bg-red-600 bg-opacity-90 flex items-center justify-center text-white text-3xl font-bold z-50';
+                emergency.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-phone-alt text-6xl mb-4"></i>
+                        <p>Calling Emergency Services...</p>
+                        <p class="text-xl mt-4">Please stay on the line</p>
+                    </div>
+                `;
+                document.body.appendChild(emergency);
+
+                setTimeout(() => {
+                    emergency.classList.add('opacity-0');
+                    setTimeout(() => emergency.remove(), 500);
+                }, 3000);
+            }
+        });
+
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("jifeEK9SpNKmdfP3z");
+        })();
+
+        // Add cooldown tracking variables
+        let lastEmailTime = null;
+        const EMAIL_COOLDOWN = 3 * 60 * 1000; // 3 minutes in milliseconds
+
+        // Modified email alert function with cooldown
+        async function sendEmailAlert() {
+            const currentTime = new Date().getTime();
+            
+            // Check if enough time has passed since last email
+            if (lastEmailTime && (currentTime - lastEmailTime) < EMAIL_COOLDOWN) {
+                console.log("Email alert skipped - cooldown period active");
+                return;
+            }
+
+            try {
+                await emailjs.send(
+                    "service_fpa9msi", //service ID
+                    "template_9qkvg2u", //template ID
+                    {
+                        to_email: "oloyededaniel10@gmail.com",
+                        subject: "Human Detection Alert",
+                        message: "Human detected in your security feed. Your attention is needed.",
+                        timestamp: new Date().toLocaleString()
+                    }
+                );
+                console.log("Email alert sent successfully");
+                lastEmailTime = currentTime; // Update last email time
+                
+                // Show success notification
+                showNotificationToast("Alert email sent successfully!");
+            } catch (error) {
+                console.error("Failed to send email:", error);
+                showNotificationToast("Failed to send alert email", "error");
+            }
+        }
+
+        // Enhanced notification toast function
+        function showNotificationToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-blue-600' : 'bg-red-600';
+            toast.className = `toast-notification ${bgColor}`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas ${type === 'success' ? 'fa-bell' : 'fa-exclamation-circle'} text-2xl"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 100%)';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

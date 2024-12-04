@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeSafe - Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        .bg-image {
+            background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1973&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .form-container {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .shake {
+            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .verification-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .verification-icon {
+            font-size: 3rem;
+            color: #2563eb;
+            margin-bottom: 1rem;
+        }
+
+        .code-input {
+            letter-spacing: 0.5em;
+            font-size: 1.5rem;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .timer {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-top: 0.5rem;
+        }
+
+        .resend-button {
+            color: #2563eb;
+            background: none;
+            border: none;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 1rem;
+        }
+
+        .resend-button:disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-image min-h-screen flex items-center justify-center p-4">
+    <div class="form-container w-full max-w-md p-8 rounded-lg shadow-lg slide-in">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">HomeSafe - Sign Up</h1>
+        <form id="signUpForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" 
+                       id="email" 
+                       name="email" 
+                       required 
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="example@email.com">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" 
+                       id="password" 
+                       name="password" 
+                       required 
+                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                       class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter your password">
+            </div>
+            <div>
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <input type="password" 
+                       id="confirmPassword" 
+                       name="confirmPassword" 
+                       required 
+                       class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                       placeholder="Re-enter your password">
+            </div>
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700">Home Address</label>
+                <input type="text" 
+                       id="address" 
+                       name="address" 
+                       required 
+                       class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter Home Address">
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="tel" 
+                       id="phone" 
+                       name="phone" 
+                       required 
+                       class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="(123) 456-7890">
+            </div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">Sign Up</button>
+        
+        </form>
+        <p class="mt-4 text-center">
+            <a href="index.html" class="font-medium text-blue-600 hover:text-blue-500 transition duration-150 ease-in-out">Already have an account? Sign In</a>
+        </p>
+    </div>
+
+    <div id="verificationDiv" class="hidden verification-container slide-in">
+        <i class="fas fa-shield-alt verification-icon"></i>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Verify Your Email</h2>
+        <p class="text-gray-600 mb-6">
+            We've sent a verification code to your email.<br>
+            Please enter it below to complete your registration.
+        </p>
+        
+        <div class="space-y-4">
+            <div>
+                <input type="text" 
+                       id="verificationCode" 
+                       name="verificationCode" 
+                       maxlength="6"
+                       placeholder="000000"
+                       class="code-input mt-1 block w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       autocomplete="off">
+            </div>
+            
+            <div class="timer" id="codeTimer">
+                Code expires in: <span id="timerCount">05:00</span>
+            </div>
+
+            <button type="button" 
+                    id="verifyCodeBtn" 
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                <i class="fas fa-check-circle mr-2"></i>
+                Verify Code
+            </button>
+
+            <button type="button" 
+                    id="resendCodeBtn" 
+                    class="resend-button"
+                    disabled>
+                Resend Code
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            emailjs.init("jifeEK9SpNKmdfP3z");
+        })();
+
+        const form = document.getElementById('signUpForm');
+        const verificationDiv = document.getElementById('verificationDiv');
+        let verificationCode = '';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validatePasswords()) {
+                return;
+            }
+
+            const emailInput = document.getElementById('email');
+            const userEmail = emailInput.value;
+
+            // Generate new verification code
+            verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            try {
+                const response = await emailjs.send(
+                    "service_fpa9msi",
+                    "template_0v9qogo",
+                    {
+                        to_email: userEmail,
+                        verification_code: verificationCode,
+                        message: `Your verification code is: ${verificationCode}`
+                    }
+                );
+
+                if (response.status === 200) {
+                    console.log("Verification email sent to:", userEmail);
+                    // Show verification div instead of redirecting
+                    form.classList.add('hidden');
+                    verificationDiv.classList.remove('hidden');
+                    // Start the timer
+                    startTimer(300);
+                }
+            } catch (error) {
+                console.error("Failed to send email:", error);
+                alert("Failed to send verification email. Please try again.");
+            }
+        });
+
+        verifyCodeBtn.addEventListener('click', () => {
+            const inputCode = document.getElementById('verificationCode').value;
+            if (inputCode === verificationCode) {
+                const userData = {
+                    email: form.email.value,
+                    password: hashPassword(form.password.value),
+                    address: form.address.value,
+                    phone: form.phone.value,
+                    timestamp: new Date().toISOString()
+                };
+
+                localStorage.setItem('userData', JSON.stringify(userData));
+                alert('Account verified successfully! Redirecting to home page...');
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 1500);
+            } else {
+                alert('Invalid verification code. Please try again.');
+            }
+        });
+
+        // Password validation function
+        function validatePasswords() {
+            if (password.value !== confirmPassword.value) {
+                alert("Passwords don't match!");
+                return false;
+            }
+            return true;
+        }
+
+        // Function to hash password
+        function hashPassword(password) {
+            return CryptoJS.SHA256(password).toString();
+        }
+
+        // Timer functionality
+        function startTimer(duration) {
+            let timer = duration;
+            const timerDisplay = document.getElementById('timerCount');
+            const resendButton = document.getElementById('resendCodeBtn');
+            
+            const interval = setInterval(() => {
+                const minutes = parseInt(timer / 60, 10);
+                const seconds = parseInt(timer % 60, 10);
+
+                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    timerDisplay.textContent = "00:00";
+                    resendButton.disabled = false;
+                }
+            }, 1000);
+        }
+
+        // Format verification code input
+        const codeInput = document.getElementById('verificationCode');
+        codeInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+
+        // Resend code functionality
+        document.getElementById('resendCodeBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const emailSent = await sendVerificationEmail(email, verificationCode);
+            
+            if (emailSent) {
+                document.getElementById('resendCodeBtn').disabled = true;
+                startTimer(300); // 5 minutes
+                alert('New verification code sent!');
+            } else {
+                alert('Failed to send new verification code. Please try again.');
+            }
+        });
+
+        // Add this function to check password match
+        function validatePasswords() {
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const submitButton = document.querySelector('button[type="submit"]');
+            
+            // Check if passwords match
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity("Passwords don't match");
+                submitButton.disabled = true;
+                // Add visual feedback
+                confirmPassword.classList.add('border-red-500');
+                confirmPassword.classList.remove('border-gray-300');
+                // Add error message
+                document.getElementById('passwordError').textContent = "Passwords don't match";
+                return false;
+            } else {
+                confirmPassword.setCustomValidity('');
+                submitButton.disabled = false;
+                // Remove error styling
+                confirmPassword.classList.remove('border-red-500');
+                confirmPassword.classList.add('border-gray-300');
+                // Clear error message
+                document.getElementById('passwordError').textContent = "";
+                return true;
+            }
+        }
+
+        // Add this to your existing form HTML
+        const passwordDiv = document.querySelector('div:has(#confirmPassword)');
+        passwordDiv.insertAdjacentHTML('beforeend', 
+            '<p id="passwordError" class="text-red-500 text-sm mt-1"></p>'
+        );
+
+        // Add event listeners for real-time validation
+        document.getElementById('password').addEventListener('input', validatePasswords);
+        document.getElementById('confirmPassword').addEventListener('input', validatePasswords);
+
+        // Add this to check the stored email
+        console.log("Stored email:", localStorage.getItem('userEmail'));
+    </script>
+</body>
+</html>
+

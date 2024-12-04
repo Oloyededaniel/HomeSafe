@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - HomeSafe Project</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .team-member {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+        }
+        .team-member:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .team-member img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        .team-member .name {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .team-member .role {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        .team-member .description {
+            font-size: 1rem;
+            color: #495057;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold">HomeSafe</a>
+            <ul class="flex space-x-4">
+                <li><a href="/home.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Home</a></li>
+                <li><a href="/Sensor_readings.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Dashboard</a></li>
+                <li><a href="/livefeed.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Live Feed</a></li>
+                <li><a href="/about_us.html" class="hover:text-blue-200 transition duration-150 ease-in-out">About Us</a></li>
+                <li><a href="/Services.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Services</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">About Us</h1>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Team Lead -->
+            <div class="team-member bg-white p-6 rounded-lg shadow-lg text-center">
+                <img src="Teamlead.jpg" alt="Team Lead" class="rounded-lg">
+                <div class="name">Daniel Oloyede</div>
+                <div class="role">Team Lead</div>
+                <p class="description">
+                    Daniel worked on both the hardware and software aspects of the HomeSafe project, leading the development of sensors and integrating them with the system.
+                </p>
+            </div>
+
+            <!-- Website Developer -->
+            <div class="team-member bg-white p-6 rounded-lg shadow-lg text-center">
+                <img src="meharpal.jpg" alt="Website Developer" class="rounded-lg">
+                <div class="name">Meharpal Singh</div>
+                <div class="role">Web Developer</div>
+                <p class="description">
+                    Meharpal developed the website for the HomeSafe project, focusing on the dashboard and user interface, making the data easily accessible and visually appealing.
+                </p>
+            </div>
+
+            <!-- Image Processing -->
+            <div class="team-member bg-white p-6 rounded-lg shadow-lg text-center">
+                <img src="A.jpg" alt="Image Processing Expert" class="rounded-lg">
+                <div class="name">Anjali Singh</div>
+                <div class="role">Image Processing</div>
+                <p class="description">
+                    Anjali worked on the image processing aspect of the project, focusing on AI-driven motion detection to differentiate between human and non-human objects.
+                </p>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

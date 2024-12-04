@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeSafe - Sensor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <!-- Firebase v9+ (compatibility mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-database-compat.js"></script>
+    <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+    <style>
+        .progress-bar {
+            height: 1rem;
+            background-color: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            transition: width 0.6s ease-in-out;
+            border-radius: 8px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        @keyframes blinkFast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes blinkSlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .blink-fast {
+            animation: blinkFast 0.5s ease-in-out infinite;
+        }
+
+        .blink-slow {
+            animation: blinkSlow 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold">HomeSafe</a>
+            <ul class="flex space-x-4">
+                <li><a href="/home.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Home</a></li>
+                <li><a href="/Sensor_readings.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Dashboard</a></li>
+                <li><a href="/livefeed.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Live Feed</a></li>
+                <li><a href="/about_us.html" class="hover:text-blue-200 transition duration-150 ease-in-out">About Us</a></li>
+                <li><a href="/Services.html" class="hover:text-blue-200 transition duration-150 ease-in-out">Services</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">Sensor Dashboard</h1>
+        
+        <!-- Temperature and Humidity Gauges -->
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <h2 class="text-2xl font-bold text-blue-600">Temperature</h2>
+                <canvas id="temperatureGauge" width="200" height="100"></canvas>
+                <p id="temperatureValue" class="mt-4 text-lg font-semibold text-gray-800">Loading...</p>
+            </div>
+
+            <!-- Humidity Gauge -->
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <h2 class="text-2xl font-bold text-blue-600">Humidity</h2>
+                <canvas id="humidityGauge" width="200" height="100"></canvas>
+                <p id="humidityValue" class="mt-4 text-lg font-semibold text-gray-800">Loading...</p>
+            </div>
+
+            <!-- Distance Progress Bar -->
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <h2 class="text-2xl font-bold text-blue-600">Distance</h2>
+                <div class="progress-bar-container">
+                    <div class="progress-bar relative">
+                        <div id="distanceProgress" class="progress-bar-fill"></div>
+                        <div id="distanceText" class="distance-text">0</div>
+                    </div>
+                </div>
+                <p id="distanceValue" class="mt-4 text-lg font-semibold text-gray-800">Loading...</p>
+            </div>
+
+            <!-- Motion Detection -->
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <h2 class="text-2xl font-bold text-blue-600">Motion Detection</h2>
+                <div id="motionIndicator" class="text-5xl mt-4"><i class="fas fa-person"></i></div>
+                <p id="motionStatus" class="mt-2 text-lg font-semibold">No Motion Detected</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="mt-8 grid md:grid-cols-2 gap-8">
+        <!-- Temperature Analytics -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Temperature Analytics</h2>
+            <canvas id="temperatureChart"></canvas>
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="text-center">
+                    <p class="text-gray-600">Average</p>
+                    <p id="avgTemp" class="text-xl font-bold">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">Max Today</p>
+                    <p id="maxTemp" class="text-xl font-bold">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Humidity Analytics -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Humidity Analytics</h2>
+            <canvas id="humidityChart"></canvas>
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="text-center">
+                    <p class="text-gray-600">Average</p>
+                    <p id="avgHumidity" class="text-xl font-bold">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">Max Today</p>
+                    <p id="maxHumidity" class="text-xl font-bold">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motion Detection Analytics -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Motion Detection Analytics</h2>
+            <canvas id="motionChart"></canvas>
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="text-center">
+                    <p class="text-gray-600">Human Detections Today</p>
+                    <p id="humanCount" class="text-xl font-bold">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">Object Detections Today</p>
+                    <p id="objectCount" class="text-xl font-bold">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distance Analytics -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Distance Analytics</h2>
+            <canvas id="distanceChart"></canvas>
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="text-center">
+                    <p class="text-gray-600">Average Distance</p>
+                    <p id="avgDistance" class="text-xl font-bold">-</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">Closest Approach</p>
+                    <p id="minDistance" class="text-xl font-bold">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB51aXqcVF2YyFuIZTZ2wcannWVw5OOkSU",
+            authDomain: "final-project-iot-be6f8.firebaseapp.com",
+            databaseURL: "https://final-project-iot-be6f8-default-rtdb.firebaseio.com",
+            projectId: "final-project-iot-be6f8",
+            storageBucket: "final-project-iot-be6f8.firebasestorage.app",
+            messagingSenderId: "874304932814",
+            appId: "1:874304932814:web:018c22b35bf475b183799f",
+            measurementId: "G-3GL0T75RE0"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Initialize gauges
+        const temperatureGauge = new Gauge(document.getElementById("temperatureGauge")).setOptions({
+            angle: 0,
+            lineWidth: 0.3,
+            radiusScale: 1,
+            pointer: { length: 0.6, strokeWidth: 0.035 },
+            limitMax: true,
+            colorStart: "#FF4E42",
+            colorStop: "#4E42FF"
+        });
+        temperatureGauge.maxValue = 50;
+        temperatureGauge.setMinValue(0);
+        temperatureGauge.animationSpeed = 32;
+
+        const humidityGauge = new Gauge(document.getElementById("humidityGauge")).setOptions({
+            angle: 0,
+            lineWidth: 0.3,
+            radiusScale: 1,
+            pointer: { length: 0.6, strokeWidth: 0.035 },
+            limitMax: true,
+            colorStart: "#4E4FFF",
+            colorStop: "#42FF9E"
+        });
+        humidityGauge.maxValue = 100;
+        humidityGauge.setMinValue(0);
+        humidityGauge.animationSpeed = 32;
+
+        // Firebase data listeners for sensors
+        database.ref("/sensor_data/temperature").on("value", snapshot => {
+            const temperature = snapshot.val();
+            document.getElementById("temperatureValue").innerText = `Temperature: ${temperature} °C`;
+            temperatureGauge.set(temperature);
+        });
+
+        database.ref("/sensor_data/humidity").on("value", snapshot => {
+            const humidity = snapshot.val();
+            document.getElementById("humidityValue").innerText = `Humidity: ${humidity} %`;
+            humidityGauge.set(humidity);
+        });
+
+        database.ref("/sensor_data/distance").on("value", snapshot => {
+            const distanceCm = snapshot.val();
+            const distanceElement = document.getElementById("distanceProgress");
+            const distanceText = document.getElementById("distanceText");
+            const distanceValueElement = document.getElementById("distanceValue");
+
+            let distanceValue, displayUnit;
+
+            // Check if the distance is in cm or meters
+            if (distanceCm < 100) {
+                distanceValue = distanceCm; // In cm
+                displayUnit = 'cm';
+            } else {
+                distanceValue = (distanceCm / 100).toFixed(2); // Convert cm to meters
+                displayUnit = 'm';
+            }
+
+            distanceText.innerText = `${distanceValue} ${displayUnit}`;
+            distanceValueElement.innerText = `${distanceValue} ${displayUnit}`;
+
+            // Set progress bar width and color based on distance value
+            let progressPercentage = Math.min((distanceCm / 200), 1) * 100; // Limit progress to 100%
+
+            if (distanceCm < 30) {
+                // Red for less than 30cm
+                distanceElement.style.backgroundColor = "#FF4E42"; // Red
+            } else if (distanceCm >= 30 && distanceCm < 100) {
+                // Yellow for between 30cm and 100cm
+                distanceElement.style.backgroundColor = "#FFCC00"; // Yellow
+            } else {
+                // Green for greater than 100cm
+                distanceElement.style.backgroundColor = "#4CAF50"; // Green
+            }
+
+            // Animate the progress bar
+            distanceElement.style.width = `${progressPercentage}%`;
+        });
+        database.ref("/sensor_data/motion").on("value", snapshot => {
+            const motionDetected = snapshot.val();
+            const motionEl = document.getElementById("motionIndicator");
+            const motionStatus = document.getElementById("motionStatus");
+
+            // Remove all existing classes first
+            motionEl.classList.remove("text-green-500", "text-yellow-500", "text-red-500", "blink-fast", "blink-slow");
+            motionStatus.classList.remove("text-green-500", "text-yellow-500", "text-red-500");
+
+            if (motionDetected) {
+                // Check if human is detected
+                database.ref("/sensor_data/human_detected").once("value", humanSnapshot => {
+                    const humanDetected = humanSnapshot.val();
+
+                    if (humanDetected) {
+                        // Human detected
+                        motionEl.classList.add("text-green-500", "blink-fast");
+                        motionStatus.classList.add("text-green-500");
+                        motionStatus.textContent = "Motion Detected: Human!!!";
+                    } else {
+                        // Object detected
+                        motionEl.classList.add("text-yellow-500", "blink-slow");
+                        motionStatus.classList.add("text-yellow-500");
+                        motionStatus.textContent = "Motion Detected: Object!!!";
+                    }
+                });
+            } else {
+                // No motion detected
+                motionEl.classList.add("text-red-500");
+                motionStatus.classList.add("text-red-500");
+                motionStatus.textContent = "No Motion Detected";
+            }
+        });
+
+        // Initialize data arrays for charts
+        const timeLabels = [];
+        const tempData = [];
+        const humidityData = [];
+        const distanceData = [];
+        const motionData = {
+            human: 0,
+            object: 0
+        };
+
+        // Initialize charts
+        const temperatureChart = new Chart(document.getElementById('temperatureChart'), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: tempData,
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const humidityChart = new Chart(document.getElementById('humidityChart'), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Humidity (%)',
+                    data: humidityData,
+                    borderColor: 'rgb(54, 162, 235)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const motionChart = new Chart(document.getElementById('motionChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Human', 'Object', 'No Motion'],
+                datasets: [{
+                    data: [0, 0, 1],
+                    backgroundColor: ['rgb(75, 192, 192)', 'rgb(255, 205, 86)', 'rgb(201, 203, 207)']
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+
+        const distanceChart = new Chart(document.getElementById('distanceChart'), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Distance (cm)',
+                    data: distanceData,
+                    borderColor: 'rgb(153, 102, 255)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Update charts with new data
+        database.ref("/sensor_data").on("value", snapshot => {
+            const data = snapshot.val();
+            const currentTime = moment().format('HH:mm:ss');
+
+            // Update arrays
+            timeLabels.push(currentTime);
+            tempData.push(data.temperature);
+            humidityData.push(data.humidity);
+            distanceData.push(data.distance);
+
+            // Limit data points to last 10 readings
+            if (timeLabels.length > 10) {
+                timeLabels.shift();
+                tempData.shift();
+                humidityData.shift();
+                distanceData.shift();
+            }
+
+            // Update motion counts
+            if (data.motion) {
+                if (data.human_detected) {
+                    motionData.human++;
+                } else {
+                    motionData.object++;
+                }
+            }
+
+            // Update charts
+            temperatureChart.update();
+            humidityChart.update();
+            distanceChart.update();
+            motionChart.data.datasets[0].data = [
+                motionData.human,
+                motionData.object,
+                100 - (motionData.human + motionData.object)
+            ];
+            motionChart.update();
+
+            // Update statistics
+            document.getElementById('avgTemp').textContent = 
+                `${(tempData.reduce((a, b) => a + b, 0) / tempData.length).toFixed(1)}°C`;
+            document.getElementById('maxTemp').textContent = 
+                `${Math.max(...tempData)}°C`;
+            document.getElementById('avgHumidity').textContent = 
+                `${(humidityData.reduce((a, b) => a + b, 0) / humidityData.length).toFixed(1)}%`;
+            document.getElementById('maxHumidity').textContent = 
+                `${Math.max(...humidityData)}%`;
+            document.getElementById('humanCount').textContent = 
+                motionData.human;
+            document.getElementById('objectCount').textContent = 
+                motionData.object;
+            document.getElementById('avgDistance').textContent = 
+                `${(distanceData.reduce((a, b) => a + b, 0) / distanceData.length).toFixed(1)}cm`;
+            document.getElementById('minDistance').textContent = 
+                `${Math.min(...distanceData)}cm`;
+        });
+    </script>
+</body>
+</html>

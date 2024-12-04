@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeSafe - Sign In</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        .bg-image {
+            background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1973&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .form-container {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-image min-h-screen flex items-center justify-center p-4">
+    <div class="form-container w-full max-w-md p-8 rounded-lg shadow-lg slide-in">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">HomeSafe</h1>
+        <form id="signInForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" 
+                       id="email" 
+                       name="email" 
+                       required 
+                       class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="example@email.com">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" 
+                       id="password" 
+                       name="password" 
+                       required 
+                       class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter your password">
+            </div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">Sign In</button>
+        </form>
+        <p class="mt-4 text-center">
+            <a href="/signup.html" class="font-medium text-blue-600 hover:text-blue-500 transition duration-150 ease-in-out">Don't have an account? Sign Up</a>
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById('signInForm');
+        let loginAttempts = 0;
+        let lockoutTime = null;
+
+        function hashPassword(password) {
+            return CryptoJS.SHA256(password).toString();
+        }
+
+        function checkLoginAttempts() {
+            if (lockoutTime && new Date() < lockoutTime) {
+                const remainingTime = Math.ceil((lockoutTime - new Date()) / 1000);
+                alert(`Account temporarily locked. Try again in ${remainingTime} seconds.`);
+                return false;
+            }
+            if (loginAttempts >= 3) {
+                lockoutTime = new Date(new Date().getTime() + 5 * 60000); // 5 minutes lockout
+                loginAttempts = 0;
+                alert('Too many failed attempts. Account locked for 5 minutes.');
+                return false;
+            }
+            return true;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!checkLoginAttempts()) {
+                return;
+            }
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Get stored user data
+            const storedUserData = JSON.parse(localStorage.getItem('userData'));
+            
+            if (!storedUserData || 
+                storedUserData.email !== data.email || 
+                storedUserData.password !== hashPassword(data.password)) {
+                loginAttempts++;
+                alert('Invalid email or password!');
+                return;
+            }
+
+            // Successful login
+            alert('Login successful! Redirecting to home page...');
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
